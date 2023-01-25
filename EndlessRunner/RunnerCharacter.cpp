@@ -7,6 +7,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Spike.h"
 #include "Wall.h"
+#include "Coin.h"
 #include "Engine.h"
 
 // Sets default values
@@ -41,6 +42,9 @@ ARunnerCharacter::ARunnerCharacter()
 	tempPos = GetActorLocation();
 	zPos = tempPos.Z = 300.f;
 
+	jumping = false;
+	jumpCount = 0;
+
 
 }
 
@@ -63,10 +67,34 @@ void ARunnerCharacter::MoveRight(float value)
 	}
 }
 
+void ARunnerCharacter::CheckJump()
+{
+	if (jumping)
+	{
+		jumping = false;
+	}
+
+	else
+	{
+		jumping = true;
+		jumpCount++;
+		
+		if (jumpCount == 2)
+		{
+			LaunchCharacter(FVector(0, 0, 500), false, true);
+		}
+	}
+}
+
 // Called every frame
 void ARunnerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (jumping)
+	{
+		Jump();
+	}
 
 	//Update camera every tick
 	tempPos = GetActorLocation();
@@ -82,8 +110,8 @@ void ARunnerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	//Bind actions from player class
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ARunnerCharacter::CheckJump);
+	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ARunnerCharacter::CheckJump);
 	PlayerInputComponent->BindAxis("MoveRight", this, &ARunnerCharacter::MoveRight);
 
 }
@@ -100,6 +128,7 @@ void ARunnerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 	{
 		ASpike* Wall = Cast<AWall>(OtherActor);
 		ASpike* Spike = Cast<ASpike>(OtherActor);
+		ACoin* Coin = Cast<ACoin>(OtherActor);
 
 		if (Wall || Spike)
 		{
@@ -112,6 +141,22 @@ void ARunnerCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActo
 			FTimerHandle UnusedHandle;
 			GetWorldTimerManager().SetTimer(UnusedHandle, this, &ARunnerCharacter::RestartLevel, 2.f, false);
 		}
+
+		else if (Coin)
+		{
+			CoinCount++;
+
+			OtherActor->Destroy();
+			
+		}
 	}
+}
+
+void ARunnerCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	jumpCount = 0;
+
 }
 

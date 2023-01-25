@@ -29,10 +29,16 @@ public:
 		return SideCamera;
 	}
 
+	virtual void Landed(const FHitResult& Hit) override;
+
 	void RestartLevel();
 
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	UPROPERTY(BlueprintReadOnly, Category = Stats)
+	int CoinCount = 0;
+
 
 protected:
 	// Called when the game starts or when spawned
@@ -45,5 +51,13 @@ private:
 	FVector tempPos = FVector();
 
 	bool CanMove;
+
+	UPROPERTY()
+	bool jumping;
+
+	UPROPERTY()
+	int jumpCount;
+
+	void CheckJump();
 
 };
